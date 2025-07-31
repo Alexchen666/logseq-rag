@@ -14,5 +14,4 @@ dependencies = [
     "scikit-learn>=1.7.1",
     "sentence-transformers>=5.0.0",
     "streamlit>=1.47.1",
-    "tqdm>=4.67.1",
 ]

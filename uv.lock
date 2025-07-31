@@ -1,6 +1,10 @@
 version = 1
 revision = 2
 requires-python = ">=3.12"
+resolution-markers = [
+    "python_full_version >= '3.13'",
+    "python_full_version < '3.13'",
+]
 
 [[package]]
 name = "altair"
@@ -573,7 +577,6 @@ dependencies = [
     { name = "scikit-learn" },
     { name = "sentence-transformers" },
     { name = "streamlit" },
-    { name = "tqdm" },
 ]
 
 [package.metadata]
@@ -587,7 +590,6 @@ requires-dist = [
     { name = "scikit-learn", specifier = ">=1.7.1" },
     { name = "sentence-transformers", specifier = ">=5.0.0" },
     { name = "streamlit", specifier = ">=1.47.1" },
-    { name = "tqdm", specifier = ">=4.67.1" },
 ]
 
 [[package]]
