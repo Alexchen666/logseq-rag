@@ -14,3 +14,6 @@ wheels/
 
 # Vector database files
 *.pkl
+
+# MacOS files
+.DS_Store
