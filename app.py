@@ -176,13 +176,6 @@ def main():
             value=5,
             help="More pages provide more context but may include less relevant information",
         )
-        title_top_k = st.slider(
-            "Title Search Results",
-            min_value=1,
-            max_value=20,
-            value=5,
-            help="More pages provide more context but may include less relevant information",
-        )
 
         st.divider()
 
@@ -339,7 +332,6 @@ def main():
                         query,
                         query,
                         top_k=vector_top_k,
-                        title_top_k=title_top_k,
                         url=logseq_config.get("url"),
                         token=logseq_config.get("token"),
                     )
