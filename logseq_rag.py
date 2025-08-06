@@ -27,8 +27,8 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 class LLMProvider(Enum):
     """Supported LLM providers"""
 
-    OPENAI = "openai"
     ANTHROPIC = "anthropic"
+    OPENAI = "openai"
 
 
 @dataclass
