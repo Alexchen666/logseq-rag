@@ -450,14 +450,12 @@ class LogseqRAG:
         self.llm_manager = LLMManager(llm_config)
         self.vector_store = vector_store
 
-    # TODO: Ask LLM to define a topic title that is relevant to the question
-
     def query(
         self,
         question: str,
         title_query: str,
         top_k: int = 3,
-        title_top_k: int = 5,
+        title_top_k: int = 3,
         url: Optional[str] = "",
         token: Optional[str] = "",
     ) -> Dict[str, Any]:
@@ -478,48 +476,63 @@ class LogseqRAG:
         # Get content-based results
         content_results = self.vector_store.search(question, top_k=top_k)
 
-        # Get title-based results
-        title_results = self.vector_store.search_titles(title_query, top_k=title_top_k)
-
+        # TODO: Ask LLM to define a topic title that is relevant to the question
         # Get resources from Logseq API if URL and token are provided
         journal_results = []
         page_results = []
         if url and token:
-            top_title_results = title_results[0][0].page_title
-            api_results = self.search_resources(f"[[{top_title_results}]]", url, token)
-            journal_results = api_results.get("Journal", [])
-            pages_queriable = api_results.get("Page", [])
-            page_results = [
-                self.vector_store.search_titles(page, top_k=1)
-                for page in pages_queriable
-            ]
+            # Get title-based results
+            title_results = self.vector_store.search_titles(
+                title_query, top_k=title_top_k
+            )
+            # Search Resources using the top title result
+            if title_results:
+                for title, score in title_results:
+                    top_title = title.page_title
+                    api_results = self.search_resources(f"[[{top_title}]]", url, token)
+                    journal_result = api_results.get("Journal", [])
+                    pages_queriable = api_results.get("Page", [])
+                    page_results.extend(
+                        [
+                            (self.vector_store.search_titles(page, top_k=1), score)
+                            for page in pages_queriable
+                        ]
+                    )
 
-            # Transform journal results into LogseqPage objects
-            journal_results = [
-                LogseqPage(
-                    content=jr["Content"],
-                    page_title=jr["Title"],
-                    file_path="",
-                    references=[],
-                    created_date=None,
-                )
-                for jr in journal_results
-            ]
+                    # Transform journal results into LogseqPage objects
+                    journal_results.extend(
+                        [
+                            (
+                                LogseqPage(
+                                    content=jr["Content"],
+                                    page_title=jr["Title"],
+                                    file_path="",
+                                    references=[],
+                                    created_date=None,
+                                ),
+                                score,
+                            )
+                            for jr in journal_result
+                        ]
+                    )
 
         # Combine and deduplicate results
         all_results = {}
 
         # Add API results (This is the first priority)
-        for page_result in page_results:
-            for page, score in page_result:
+        for page_result, score in page_results:
+            for (
+                page,
+                _,
+            ) in page_result:  # page_result is ([LogseqPage, top_k=1 score], score)
                 page_id = id(page)
                 if page_id in all_results:
                     pass
                 else:
-                    all_results[page_id] = (page, 1.0, "API")
+                    all_results[page_id] = (page, score, "API")
 
-        for jr in journal_results:
-            all_results[id(jr)] = (jr, 1.0, "API")
+        for jr, score in journal_results:
+            all_results[id(jr)] = (jr, score, "API")
 
         # Add content results
         for page, score in content_results:
@@ -528,19 +541,6 @@ class LogseqRAG:
                 pass
             else:
                 all_results[page_id] = (page, score, "content")
-
-        # Add title results (with lower weight if already present)
-        for page, score in title_results:
-            page_id = id(page)
-            if page_id in all_results:
-                # Combine scores
-                existing_score = all_results[page_id][1]
-                combined_score = max(
-                    existing_score, score * 0.7
-                )  # Title results get 70% weight
-                all_results[page_id] = (page, combined_score, "multiple")
-            else:
-                all_results[page_id] = (page, score * 0.7, "title")
 
         # Sort by combined score
         combined_results = [(page, score) for page, score, _ in all_results.values()]
@@ -579,7 +579,7 @@ class LogseqRAG:
                     else page.content,
                     "similarity": score,
                     "references": page.references,
-                    "source_type": source_type,  # "API", "content", "title", or "multiple"
+                    "source_type": source_type,  # "API" or "content"
                     "word_count": getattr(page, "word_count", 0),
                     "created_date": getattr(page, "created_date", None),
                 }
