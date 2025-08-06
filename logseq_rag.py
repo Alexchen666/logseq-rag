@@ -39,7 +39,7 @@ class LLMConfig:
     api_key: Optional[str] = None
     model_name: Optional[str] = None
     base_url: Optional[str] = None  # For Ollama or custom endpoints
-    temperature: float = 0.1
+    temperature: float = 0.0
     max_tokens: int = 1000
 
 
@@ -60,7 +60,12 @@ class LogseqPage:
         self.word_count = len(self.content.split())
 
     def extract_references(self) -> List[str]:
-        """Extract [[references]] from content"""
+        """
+        Extract [[references]] from content
+
+        Returns:
+            List[str]: List of references found in the content
+        """
         pattern = r"\[\[([^\]]+)\]\]"
         return re.findall(pattern, self.content)
 
@@ -84,7 +89,11 @@ class LogseqParser:
         self.journals_path = self.logseq_path / "journals"
 
     def parse_all_files(self) -> List[LogseqPage]:
-        """Parse all markdown files in the Logseq directory as complete pages"""
+        """
+        Parse all markdown files in the Logseq directory as complete pages
+
+        Returns:
+            List[LogseqPage]: List of parsed LogseqPage objects"""
         pages = []
 
         # Parse pages
@@ -104,7 +113,15 @@ class LogseqParser:
         return pages
 
     def parse_file_as_page(self, file_path: Path) -> Optional[LogseqPage]:
-        """Parse a single markdown file as a complete page"""
+        """
+        Parse a single markdown file as a complete page
+
+        Args:
+            file_path (Path): Path to the markdown file
+
+        Returns:
+            Optional[LogseqPage]: Parsed LogseqPage object or None if parsing fails
+        """
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
@@ -132,7 +149,7 @@ class LogseqParser:
 
 
 class VectorStore:
-    """Vector store for semantic search using sentence transformers - now supports both pages and blocks"""
+    """Vector store for semantic search using sentence transformers"""
 
     def __init__(
         self,
@@ -160,7 +177,12 @@ class VectorStore:
                 self.use_chroma = False
 
     def add_pages(self, pages: List[LogseqPage]):
-        """Add pages to the vector store"""
+        """
+        Add pages to the vector store
+
+        Args:
+            pages (List[LogseqPage]): List of LogseqPage objects to add
+        """
         self.pages = pages
         print(f"Creating embeddings for {len(pages)} pages...")
 
@@ -216,7 +238,16 @@ class VectorStore:
             self.embeddings = embeddings
 
     def search(self, query: str, top_k: int = 5) -> List[Tuple[LogseqPage, float]]:
-        """Search for similar pages or blocks"""
+        """
+        Search for similar pages or blocks
+
+        Args:
+            query (str): Search query
+            top_k (int): Maximum number of results to return
+
+        Returns:
+            List[Tuple[LogseqPage, float]]: List of (LogseqPage, similarity_score) tuples
+        """
         if self.use_chroma:
             results = self.collection.query(
                 query_texts=[query],
@@ -265,12 +296,12 @@ class VectorStore:
         Search for pages by title similarity
 
         Args:
-            query: Search query for titles
-            top_k: Maximum number of results to return
-            min_similarity: Minimum similarity threshold
+            query (str): Search query for titles
+            top_k (int): Maximum number of results to return
+            min_similarity (float): Minimum similarity threshold
 
         Returns:
-            List of (page, similarity_score) tuples
+            List[Tuple[LogseqPage, float]]: List of (page, similarity_score) tuples
         """
         if self.title_search_engine is None:
             print("Title search engine not initialized. Please add pages first.")
@@ -289,7 +320,7 @@ class VectorStore:
             case_sensitive: Whether to perform case-sensitive matching
 
         Returns:
-            LogseqPage if found, None otherwise
+            Optional[LogseqPage]: LogseqPage if found, None otherwise
         """
         if self.title_search_engine is None:
             print("Title search engine not initialized. Please add pages first.")
@@ -304,11 +335,11 @@ class VectorStore:
         Find pages whose titles contain the given substring
 
         Args:
-            substring: Substring to search for in titles
-            case_sensitive: Whether to perform case-sensitive matching
+            substring (str): Substring to search for in titles
+            case_sensitive (bool): Whether to perform case-sensitive matching
 
         Returns:
-            List of LogseqPage objects with matching titles
+            List[LogseqPage]: List of LogseqPage objects with matching titles
         """
         if self.title_search_engine is None:
             print("Title search engine not initialized. Please add pages first.")
@@ -317,7 +348,12 @@ class VectorStore:
         return self.title_search_engine.search_title_contains(substring, case_sensitive)
 
     def save(self, path: str):
-        """Save vector store to disk"""
+        """
+        Save vector store to disk
+
+        Args:
+            path (str): Path to save the vector store
+        """
         if not self.use_chroma:
             data = {"pages": self.pages, "embeddings": self.embeddings}
             with open(path, "wb") as f:
@@ -327,7 +363,12 @@ class VectorStore:
             print("ChromaDB data is automatically persisted")
 
     def load(self, path: str):
-        """Load vector store from disk"""
+        """
+        Load vector store from disk
+
+        Args:
+            path (str): Path to load the vector store from
+        """
         if not self.use_chroma:
             with open(path, "rb") as f:
                 data = pickle.load(f)
@@ -378,7 +419,15 @@ class LLMManager:
             raise ValueError(f"Unsupported LLM provider: {self.config.provider}")
 
     def generate_response(self, messages: List[BaseMessage]) -> str:
-        """Generate response using the configured LLM"""
+        """
+        Generate response using the configured LLM
+
+        Args:
+            messages (List[BaseMessage]): List of messages to send to the LLM
+
+        Returns:
+            str: Generated response content
+        """
         try:
             response = self.llm.invoke(messages)
             return response.content
@@ -401,12 +450,7 @@ class LogseqRAG:
         self.llm_manager = LLMManager(llm_config)
         self.vector_store = vector_store
 
-    # Ask LLM to define a topic title that is relevant to the question
-    # Use search_titles to find if it exists
-    # If so, use query_resources to get the relevent information
-    # For journal pages, it receives the content directly
-    # For regular pages, it receives the page name and then fetches the content
-    # Also LLM should able to find the reference and use query_resources to find the information to help answer the question
+    # TODO: Ask LLM to define a topic title that is relevant to the question
 
     def query(
         self,
@@ -418,18 +462,18 @@ class LogseqRAG:
         token: Optional[str] = "",
     ) -> Dict[str, Any]:
         """
-        Enhanced query that combines content search with title-based page discovery
+        Enhanced query that combines content search, title-based page discovery, and Logseq API resource fetching
 
         Args:
-            question: The main question to answer
-            title_query: Query to find relevant pages by title
-            top_k: Number of content-based results to retrieve
-            title_top_k: Number of title-based results to retrieve
-            url: Logseq API URL for fetching resources
-            token: Authentication token for Logseq API
+            question (str): The main question to answer
+            title_query (str): Query to find relevant pages by title
+            top_k (int): Number of content-based results to retrieve
+            title_top_k (int): Number of title-based results to retrieve
+            url (Optional[str]): Logseq API URL for fetching resources
+            token (Optional[str]): Authentication token for Logseq API
 
         Returns:
-            Dictionary with answer and combined sources
+            Dict[str, Any]: Dictionary with answer and combined sources
         """
         # Get content-based results
         content_results = self.vector_store.search(question, top_k=top_k)
@@ -555,12 +599,12 @@ class LogseqRAG:
         Search for pages by title similarity
 
         Args:
-            query: Search query for titles
-            top_k: Maximum number of results to return
-            min_similarity: Minimum similarity threshold
+            query (str): Search query for titles
+            top_k (int): Maximum number of results to return
+            min_similarity (float): Minimum similarity threshold
 
         Returns:
-            Dictionary with search results and metadata
+            Dict[str, Any]: Dictionary with search results and metadata
         """
         results = self.vector_store.search_titles(query, top_k, min_similarity)
 
@@ -613,7 +657,7 @@ class LogseqRAG:
             token (str): The authentication token for the Logseq API.
 
         Returns:
-            Dict: A dict of resources matching the query.
+            Dict[str, Any]: A dict of resources matching the query.
         """
         journal = []
         page_names = set()  # To avoid duplicates
@@ -633,6 +677,16 @@ class LogseqRAG:
         }
 
     def _fetch_data(self, url: str, token: str, query: str) -> List[Dict]:
+        """
+        Fetches data from the Logseq API based on the provided query.
+
+        Args:
+            url (str): The URL of the Logseq API.
+            token (str): The authentication token for the Logseq API.
+            query (str): The query to search for resources.
+        Returns:
+            List[Dict]: A list of results matching the query.
+        """
         headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
@@ -649,6 +703,17 @@ class LogseqRAG:
             response.raise_for_status()
 
     def _get_block_tree(self, url: str, token: str, page_name: str) -> List[Dict]:
+        """
+        Fetches the block tree for a given page from the Logseq API.
+
+        Args:
+            url (str): The URL of the Logseq API.
+            token (str): The authentication token for the Logseq API.
+            page_name (str): The name of the page to fetch the block tree for.
+
+        Returns:
+            List[Dict]: The block tree for the specified page.
+        """
         headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
@@ -675,7 +740,8 @@ class LogseqRAG:
             parent_id (int): The ID of the parent block to extract.
 
         Returns:
-            dict: A dictionary containing the title, source, and ordered content of the block."""
+            Dict: A dictionary containing the title, source, and ordered content of the block.
+        """
         selected_block = [
             block_item
             for block_item in block_tree
@@ -707,7 +773,7 @@ class LogseqRAG:
             block_children (List[Dict]): List of block children to order.
 
         Returns:
-            ordered (list): Ordered list of block contents.
+            ordered (List): Ordered list of block contents.
         """
         # Build a map from id to entry
         id_map = {item["id"]: item for item in block_children}
@@ -737,7 +803,15 @@ class LogseqRAG:
         return ordered
 
     def _prepare_context(self, results: List[Tuple[LogseqPage, float]]) -> str:
-        """Prepare context from search results"""
+        """
+        Prepare context from search results
+
+        Args:
+            results (List[Tuple[LogseqPage, float]]): List of (LogseqPage, similarity_score) tuples
+
+        Returns:
+            str: Formatted context string for LLM input
+        """
         context_parts = []
 
         for page, score in results:
@@ -754,7 +828,16 @@ class LogseqRAG:
         return "\n\n---\n\n".join(context_parts)
 
     def _create_messages(self, question: str, context: str) -> List[BaseMessage]:
-        """Create messages for the LLM"""
+        """
+        Create messages for the LLM
+
+        Args:
+            question (str): The user's question
+            context (str): Context string from the knowledge base
+
+        Returns:
+            List[BaseMessage]: List of messages to send to the LLM
+        """
         system_prompt = """You are an AI assistant helping to answer questions based on a personal knowledge base from Logseq.
 
 Guidelines:
@@ -784,7 +867,7 @@ class TitleSearchEngine:
         Initialize the title search engine
 
         Args:
-            embedding_model: Pre-trained sentence transformer model for vectorizing titles
+            embedding_model (SentenceTransformer): Pre-trained sentence transformer model for vectorizing titles
         """
         self.embedding_model = embedding_model
         self.pages: List[LogseqPage] = []
@@ -798,7 +881,7 @@ class TitleSearchEngine:
         Build title embeddings for the given pages
 
         Args:
-            pages: List of LogseqPage objects to index
+            pages (List[LogseqPage]): List of LogseqPage objects to index
         """
         self.pages = pages
 
@@ -823,12 +906,12 @@ class TitleSearchEngine:
         Search for pages with titles similar to the query
 
         Args:
-            query: Search query (can be keywords or phrases)
-            top_k: Maximum number of results to return
-            min_similarity: Minimum similarity threshold (0.0 to 1.0)
+            query (str): Search query (can be keywords or phrases)
+            top_k (int): Maximum number of results to return
+            min_similarity (float): Minimum similarity threshold (0.0 to 1.0)
 
         Returns:
-            List of (page, similarity_score) tuples sorted by similarity
+            List[Tuple[LogseqPage, float]]: List of (page, similarity_score) tuples sorted by similarity
         """
         if not query.strip():
             self.logger.warning("Empty query provided")
@@ -868,11 +951,11 @@ class TitleSearchEngine:
         Find a page with exact title match
 
         Args:
-            title: Exact title to search for
-            case_sensitive: Whether to perform case-sensitive matching
+            title (str): Exact title to search for
+            case_sensitive (bool): Whether to perform case-sensitive matching
 
         Returns:
-            LogseqPage if found, None otherwise
+            Optional[LogseqPage]: LogseqPage if found, None otherwise
         """
         if not title.strip():
             return None
@@ -895,11 +978,11 @@ class TitleSearchEngine:
         Find pages whose titles contain the given substring
 
         Args:
-            substring: Substring to search for in titles
-            case_sensitive: Whether to perform case-sensitive matching
+            substring (str): Substring to search for in titles
+            case_sensitive (bool): Whether to perform case-sensitive matching
 
         Returns:
-            List of LogseqPage objects with matching titles
+            List[LogseqPage]: List of LogseqPage objects with matching titles
         """
         if not substring.strip():
             return []
