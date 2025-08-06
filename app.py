@@ -350,7 +350,7 @@ def main():
                         st.markdown("**📚 Sources:**")
                         for j, source in enumerate(result["sources"][:10]):
                             with st.expander(
-                                f"Source {j + 1}{source['source_type']}: {source['page_title']} (similarity: {source['similarity']:.3f})"
+                                f"Source {j + 1}: {source['page_title']} | Source Type - {source['source_type']} | (similarity: {source['similarity']:.3f})"
                             ):
                                 st.markdown(f"**Content:** {source['content']}")
                                 if source.get("references"):
