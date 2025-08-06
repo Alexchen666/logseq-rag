@@ -104,7 +104,7 @@ def main():
         )
 
         # API Keys Section
-        st.subheader("🔑 API Keys")
+        st.subheader("🔑 Model API Keys")
         api_keys = {}
 
         if provider == LLMProvider.OPENAI.value:
@@ -135,7 +135,7 @@ def main():
             "Temperature",
             min_value=0.0,
             max_value=2.0,
-            value=0.1,
+            value=0.0,
             step=0.1,
             help="Controls randomness in responses (0 = deterministic, 2 = very creative)",
         )
@@ -348,7 +348,7 @@ def main():
                     # Show sources
                     if result["sources"]:
                         st.markdown("**📚 Sources:**")
-                        for j, source in enumerate(result["sources"][:3]):
+                        for j, source in enumerate(result["sources"][:10]):
                             with st.expander(
                                 f"Source {j + 1}{source['source_type']}: {source['page_title']} (similarity: {source['similarity']:.3f})"
                             ):
@@ -377,7 +377,7 @@ def main():
                 key="query_input",
             )
 
-            col1, col2, col3 = st.columns([2, 2, 2])
+            col1, col2, col3 = st.columns(3)
             with col1:
                 submit_button = st.form_submit_button("🔍 Ask", type="primary")
             with col2:
