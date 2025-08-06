@@ -280,9 +280,9 @@ def main():
                 )
 
             if st.session_state.vector_store.use_chroma:
-                st.info("🔧 Using ChromaDB backend")
+                st.caption("Using ChromaDB backend")
             else:
-                st.info("🔧 Using NumPy backend")
+                st.caption("Using NumPy backend")
         else:
             st.warning("❌ Vector store not loaded")
 
@@ -313,60 +313,6 @@ def main():
             st.info(
                 f"🤖 Using **{provider_info['provider']}** with model **{provider_info['model']}**"
             )
-
-        # Display chat history
-        for i, (question, result) in enumerate(st.session_state.chat_history):
-            with st.container():
-                st.markdown(f"**Q{i + 1}:** {question}")
-
-                with st.expander(
-                    f"Answer (via {result['provider_info']['provider']})", expanded=True
-                ):
-                    st.markdown(result["answer"])
-
-                    # Show enhanced retrieval context if available
-                    if result.get("search_context"):
-                        with st.expander("🔍 Search Context Details"):
-                            context = result["search_context"]
-                            st.markdown(
-                                f"**Strategy:** {context.get('strategy', 'N/A')}"
-                            )
-                            st.markdown(
-                                f"**Total Phases:** {context.get('total_phases', 0)}"
-                            )
-                            st.markdown(
-                                f"**Pages Discovered:** {context.get('pages_discovered', 0)}"
-                            )
-
-                            if context.get("search_history"):
-                                st.markdown("**Search History:**")
-                                for step in context["search_history"]:
-                                    st.markdown(
-                                        f"- {step['phase']}: {step['results_count']} results"
-                                    )
-
-                    # Show sources
-                    if result["sources"]:
-                        st.markdown("**📚 Sources:**")
-                        for j, source in enumerate(result["sources"][:10]):
-                            with st.expander(
-                                f"Source {j + 1}: {source['page_title']} | Source Type - {source['source_type']} | (similarity: {source['similarity']:.3f})"
-                            ):
-                                st.markdown(f"**Content:** {source['content']}")
-                                if source.get("references"):
-                                    st.markdown(
-                                        f"**References:** {', '.join(source['references'])}"
-                                    )
-                                if source.get("word_count"):
-                                    st.markdown(
-                                        f"**Word Count:** {source['word_count']}"
-                                    )
-                                if source.get("created_date"):
-                                    st.markdown(
-                                        f"**Created:** {source['created_date']}"
-                                    )
-
-                st.divider()
 
         # Query input
         with st.form("query_form", clear_on_submit=True):
@@ -430,6 +376,64 @@ def main():
                         st.markdown(f"**File:** {item.file_path}")
             else:
                 st.warning("No relevant pages found for your query.")
+
+        # Display chat history
+        for i, (question, result) in enumerate(
+            st.session_state.chat_history[::-1]
+        ):  # Reverse order for latest first
+            with st.container():
+                st.markdown(
+                    f"**Q{len(st.session_state.chat_history) - i}:** {question}"
+                )
+
+                with st.expander(
+                    f"Answer (via {result['provider_info']['provider']})", expanded=True
+                ):
+                    st.markdown(result["answer"])
+
+                    # Show enhanced retrieval context if available
+                    if result.get("search_context"):
+                        with st.expander("🔍 Search Context Details"):
+                            context = result["search_context"]
+                            st.markdown(
+                                f"**Strategy:** {context.get('strategy', 'N/A')}"
+                            )
+                            st.markdown(
+                                f"**Total Phases:** {context.get('total_phases', 0)}"
+                            )
+                            st.markdown(
+                                f"**Pages Discovered:** {context.get('pages_discovered', 0)}"
+                            )
+
+                            if context.get("search_history"):
+                                st.markdown("**Search History:**")
+                                for step in context["search_history"]:
+                                    st.markdown(
+                                        f"- {step['phase']}: {step['results_count']} results"
+                                    )
+
+                    # Show sources
+                    if result["sources"]:
+                        st.markdown("**📚 Sources:**")
+                        for j, source in enumerate(result["sources"][:10]):
+                            with st.expander(
+                                f"Source {j + 1}: {source['page_title']} | Source Type - {source['source_type']} | (similarity: {source['similarity']:.3f})"
+                            ):
+                                st.markdown(f"**Content:** {source['content']}")
+                                if source.get("references"):
+                                    st.markdown(
+                                        f"**References:** {', '.join(source['references'])}"
+                                    )
+                                if source.get("word_count"):
+                                    st.markdown(
+                                        f"**Word Count:** {source['word_count']}"
+                                    )
+                                if source.get("created_date"):
+                                    st.markdown(
+                                        f"**Created:** {source['created_date']}"
+                                    )
+
+                st.divider()
 
         # Knowledge base statistics
         if st.session_state.vector_store:
