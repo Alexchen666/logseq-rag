@@ -25,37 +25,23 @@ def initialize_session_state():
         st.session_state.current_provider = None
 
 
-def load_vector_store(
-    logseq_path, vector_store_path, use_chroma=False, force_rebuild=False
-):
+def load_vector_store(logseq_path):
     """Load or build vector store with page-based approach"""
-    vector_store = VectorStore(use_chroma=use_chroma)
+    vector_store = VectorStore()
 
-    if not force_rebuild and os.path.exists(vector_store_path) and not use_chroma:
-        with st.spinner("Loading existing vector store..."):
-            vector_store.load(vector_store_path)
+    with st.spinner("Parsing Logseq files..."):
+        parser = LogseqParser(logseq_path)
+        pages: List[LogseqPage] = parser.parse_all_files()
 
-        # Check if we have pages or blocks
-        if vector_store.pages:
-            st.success(f"Loaded vector store with {len(vector_store.pages)} pages")
-        else:
-            st.warning("Loaded empty vector store")
+    st.info(f"Parsed {len(pages)} pages from {logseq_path}")
+
+    if pages:
+        with st.spinner("Creating embeddings... This may take a few minutes."):
+            vector_store.add_pages(pages)
+        st.success("Vector store created and saved!")
     else:
-        with st.spinner("Parsing Logseq files..."):
-            parser = LogseqParser(logseq_path)
-            pages: List[LogseqPage] = parser.parse_all_files()
-
-        st.info(f"Parsed {len(pages)} pages from {logseq_path}")
-
-        if pages:
-            with st.spinner("Creating embeddings... This may take a few minutes."):
-                vector_store.add_pages(pages)
-                if not use_chroma:
-                    vector_store.save(vector_store_path)
-            st.success("Vector store created and saved!")
-        else:
-            st.error("No pages found. Please check your Logseq path.")
-            return None
+        st.error("No pages found. Please check your Logseq path.")
+        return None
 
     return vector_store
 
@@ -189,25 +175,6 @@ def main():
             help="Path to your Logseq directory containing pages/ and journals/ folders",
         )
 
-        # Vector Store Options
-        use_chroma = st.checkbox(
-            "Use ChromaDB",
-            value=False,
-            help="Use ChromaDB for advanced filtering capabilities",
-        )
-
-        vector_store_path = st.text_input(
-            "Vector Store File",
-            value="vector_store.pkl",
-            help="Path where vector store will be saved/loaded (only for NumPy mode)",
-        )
-
-        # Advanced vector store settings
-        force_rebuild = st.checkbox(
-            "Force rebuild vector store (Advanced)",
-            help="Rebuild the vector store even if it already exists",
-        )
-
         st.divider()
 
         # Initialise button
@@ -233,7 +200,7 @@ def main():
                 try:
                     # Load vector store
                     vector_store = load_vector_store(
-                        logseq_path, vector_store_path, use_chroma, force_rebuild
+                        logseq_path,
                     )
 
                     if vector_store:

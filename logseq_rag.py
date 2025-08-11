@@ -1,5 +1,4 @@
 import logging
-import pickle
 import re
 
 # Suppress warnings from sentence transformers
@@ -9,6 +8,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+import chromadb
 import numpy as np
 import requests
 from langchain.schema import BaseMessage, HumanMessage, SystemMessage
@@ -86,7 +86,7 @@ class LogseqParser:
     def __init__(self, logseq_path: str):
         self.logseq_path = Path(logseq_path)
         self.pages_path = self.logseq_path / "pages"
-        self.journals_path = self.logseq_path / "journals"
+        # self.journals_path = self.logseq_path / "journals"
 
     def parse_all_files(self) -> List[LogseqPage]:
         """
@@ -104,11 +104,11 @@ class LogseqParser:
                     pages.append(page)
 
         # Parse journals
-        if self.journals_path.exists():
-            for md_file in self.journals_path.glob("*.md"):
-                page = self.parse_file_as_page(md_file)
-                if page:
-                    pages.append(page)
+        # if self.journals_path.exists():
+        #     for md_file in self.journals_path.glob("*.md"):
+        #         page = self.parse_file_as_page(md_file)
+        #         if page:
+        #             pages.append(page)
 
         return pages
 
@@ -141,7 +141,7 @@ class LogseqParser:
                 pass
 
         return LogseqPage(
-            content=content,
+            content=f"# {page_title}\n{content}",  # Include title in content to make it searchable
             page_title=page_title,
             file_path=str(file_path),
             created_date=created_date,
@@ -154,27 +154,15 @@ class VectorStore:
     def __init__(
         self,
         model_name: str = "all-MiniLM-L6-v2",
-        use_chroma: bool = False,
     ):
         self.model = SentenceTransformer(model_name)
         self.pages: List[LogseqPage] = []
         self.embeddings: Optional[np.ndarray] = None
-        self.use_chroma = use_chroma
         self.title_search_engine: Optional[TitleSearchEngine] = None
 
-        if use_chroma:
-            try:
-                import chromadb
-
-                self.chroma_client = chromadb.PersistentClient(path="./chroma_db")
-                collection_name = "logseq_pages"
-                self.collection = self.chroma_client.get_or_create_collection(
-                    collection_name
-                )
-            except ImportError:
-                print("ChromaDB not installed. Install with: pip install chromadb")
-                print("Falling back to NumPy approach...")
-                self.use_chroma = False
+        self.chroma_client = chromadb.PersistentClient(path="./chroma_db")
+        collection_name = "logseq_pages"
+        self.collection = self.chroma_client.get_or_create_collection(collection_name)
 
     def add_pages(self, pages: List[LogseqPage]):
         """
@@ -196,46 +184,42 @@ class VectorStore:
             self.title_search_engine = TitleSearchEngine(self.model)
             self.title_search_engine.build_index(pages)
 
-        if self.use_chroma:
-            # Store in ChromaDB
-            documents = [page.content for page in pages]
-            metadatas = [
-                {
-                    "page_title": page.page_title,
-                    "file_path": page.file_path,
-                    "references": ",".join(page.references) if page.references else "",
-                    "word_count": page.word_count,
-                    "created_date": page.created_date or "",
-                }
-                for page in pages
-            ]
-            ids = [str(i) for i in range(len(pages))]
+        # Store in ChromaDB
+        documents = [page.content for page in pages]
+        metadatas = [
+            {
+                "page_title": page.page_title,
+                "file_path": page.file_path,
+                "references": ",".join(page.references) if page.references else "",
+                "word_count": page.word_count,
+                "created_date": page.created_date or "",
+            }
+            for page in pages
+        ]
+        ids = [str(i) for i in range(len(pages))]
 
-            # Clear existing collection
-            try:
-                self.chroma_client.delete_collection("logseq_pages")
-                self.collection = self.chroma_client.create_collection("logseq_pages")
-            except Exception:
-                pass
+        # Clear existing collection
+        try:
+            self.chroma_client.delete_collection("logseq_pages")
+            self.collection = self.chroma_client.create_collection("logseq_pages")
+        except Exception:
+            pass
 
-            # Add to ChromaDB in batches
-            batch_size = 1000
-            for i in range(0, len(documents), batch_size):
-                batch_docs = documents[i : i + batch_size]
-                batch_meta = metadatas[i : i + batch_size]
-                batch_ids = ids[i : i + batch_size]
-                batch_embeddings = embeddings[i : i + batch_size].tolist()
+        # Add to ChromaDB in batches
+        batch_size = 1000
+        for i in range(0, len(documents), batch_size):
+            batch_docs = documents[i : i + batch_size]
+            batch_meta = metadatas[i : i + batch_size]
+            batch_ids = ids[i : i + batch_size]
+            batch_embeddings = embeddings[i : i + batch_size].tolist()
 
-                self.collection.add(
-                    documents=batch_docs,
-                    metadatas=batch_meta,
-                    ids=batch_ids,
-                    embeddings=batch_embeddings,
-                )
-            print(f"Added {len(pages)} pages to ChromaDB")
-        else:
-            # Store as NumPy array
-            self.embeddings = embeddings
+            self.collection.add(
+                documents=batch_docs,
+                metadatas=batch_meta,
+                ids=batch_ids,
+                embeddings=batch_embeddings,
+            )
+        print(f"Added {len(pages)} pages to ChromaDB")
 
     def search(self, query: str, top_k: int = 5) -> List[Tuple[LogseqPage, float]]:
         """
@@ -248,46 +232,27 @@ class VectorStore:
         Returns:
             List[Tuple[LogseqPage, float]]: List of (LogseqPage, similarity_score) tuples
         """
-        if self.use_chroma:
-            results = self.collection.query(
-                query_texts=[query],
-                n_results=top_k,
+        results = self.collection.query(
+            query_texts=[query],
+            n_results=top_k,
+        )
+
+        # Convert ChromaDB results back to our format
+        search_results = []
+        for i, (doc, metadata, distance) in enumerate(
+            zip(
+                results["documents"][0],
+                results["metadatas"][0],
+                results["distances"][0],
             )
+        ):
+            # Find corresponding page or block
+            item_idx = int(results["ids"][0][i])
+            similarity = 1 - distance  # Convert distance to similarity
 
-            # Convert ChromaDB results back to our format
-            search_results = []
-            for i, (doc, metadata, distance) in enumerate(
-                zip(
-                    results["documents"][0],
-                    results["metadatas"][0],
-                    results["distances"][0],
-                )
-            ):
-                # Find corresponding page or block
-                item_idx = int(results["ids"][0][i])
-                similarity = 1 - distance  # Convert distance to similarity
+            search_results.append((self.pages[item_idx], similarity))
 
-                search_results.append((self.pages[item_idx], similarity))
-
-            return search_results
-        else:
-            # Use NumPy search
-            if self.embeddings is None:
-                return []
-
-            query_embedding = self.model.encode([query])
-            similarities = cosine_similarity(query_embedding, self.embeddings)[0]
-
-            # Get top-k most similar items
-            top_indices = np.argsort(similarities)[::-1][:top_k]
-
-            results = []
-            items = self.pages
-
-            for idx in top_indices:
-                results.append((items[idx], similarities[idx]))
-
-            return results
+        return search_results
 
     def search_titles(
         self, query: str, top_k: int = 5, min_similarity: float = 0.3
@@ -346,42 +311,6 @@ class VectorStore:
             return []
 
         return self.title_search_engine.search_title_contains(substring, case_sensitive)
-
-    def save(self, path: str):
-        """
-        Save vector store to disk
-
-        Args:
-            path (str): Path to save the vector store
-        """
-        if not self.use_chroma:
-            data = {"pages": self.pages, "embeddings": self.embeddings}
-            with open(path, "wb") as f:
-                pickle.dump(data, f)
-            print(f"Vector store saved to {path}")
-        else:
-            print("ChromaDB data is automatically persisted")
-
-    def load(self, path: str):
-        """
-        Load vector store from disk
-
-        Args:
-            path (str): Path to load the vector store from
-        """
-        if not self.use_chroma:
-            with open(path, "rb") as f:
-                data = pickle.load(f)
-            self.pages = data["pages"]
-            self.embeddings = data["embeddings"]
-            # Initialize title search engine
-            if self.title_search_engine is None:
-                print("Initializing title search engine...")
-                self.title_search_engine = TitleSearchEngine(self.model)
-                self.title_search_engine.build_index(self.pages)
-            print(f"Vector store loaded from {path}")
-        else:
-            print("ChromaDB data loaded from persistent storage")
 
 
 class LLMManager:
