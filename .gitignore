@@ -13,7 +13,10 @@ wheels/
 .env
 
 # Vector database files
-*.pkl
+chroma_db/
 
 # MacOS files
 .DS_Store
+
+# Test files
+*.ipynb
