@@ -384,7 +384,8 @@ class LogseqRAG:
         question: str,
         title_query: str,
         top_k: int = 3,
-        title_top_k: int = 3,
+        title_top_k: int = 5,
+        max_attempts: int = 3,
         url: Optional[str] = "",
         token: Optional[str] = "",
     ) -> Dict[str, Any]:
@@ -396,6 +397,7 @@ class LogseqRAG:
             title_query (str): Query to find relevant pages by title
             top_k (int): Number of content-based results to retrieve
             title_top_k (int): Number of title-based results to retrieve
+            max_attempts (int): Maximum number of attempts for LLM get topic calls
             url (Optional[str]): Logseq API URL for fetching resources
             token (Optional[str]): Authentication token for Logseq API
 
@@ -405,24 +407,29 @@ class LogseqRAG:
         # Get content-based results
         content_results = self.vector_store.search(question, top_k=top_k)
 
-        # TODO: Ask LLM to define a topic title that is relevant to the question
         # Get resources from Logseq API if URL and token are provided
         journal_results = []
         page_results = []
         if url and token:
             # LLM-based title results
             title_results = self.get_llm_topic(
-                question, [page.page_title for page in self.vector_store.pages]
+                question=question,
+                page_names=[page.page_title for page in self.vector_store.pages],
+                top_k=title_top_k,
+                max_attempts=max_attempts,
             )
             # Search Resources using the top title result
-            if title_results:
-                for title, score in title_results:
+            if not title_results.get("results_failed", True):
+                for title in title_results.get("topics", []):
                     api_results = self.search_resources(f"[[{title}]]", url, token)
                     journal_result = api_results.get("Journal", [])
                     pages_queriable = api_results.get("Page", [])
                     page_results.extend(
                         [
-                            (self.vector_store.search_titles(page, top_k=1), score)
+                            (
+                                self.vector_store.search_titles(page, top_k=1),
+                                1.0,  # Assume full match
+                            )
                             for page in pages_queriable
                         ]
                     )
@@ -438,7 +445,7 @@ class LogseqRAG:
                                     references=[],
                                     created_date=None,
                                 ),
-                                score,
+                                1.0,  # Assume full match
                             )
                             for jr in journal_result
                         ]
@@ -755,34 +762,64 @@ class LogseqRAG:
 
         return "\n\n---\n\n".join(context_parts)
 
-    def get_llm_topic(self, question: str, page_names: List[str]) -> List[str]:
+    def get_llm_topic(
+        self,
+        question: str,
+        page_names: List[str],
+        top_k: int = 5,
+        max_attempts: int = 3,
+    ) -> Dict[str, Any]:
         """
         Get the five most relevant topics from the LLM based on the question and available page names.
 
         Args:
             question (str): The user's question
             page_names (List[str]): List of available page names
+            top_k (int): Number of topics to retrieve (default is 5)
+            max_attempts (int): Maximum number of attempts to get valid topics
 
         Returns:
-            List[str]: The topics chosen by the LLM
+            Dict[str, Any]: The topics chosen by the LLM and additional metadata
         """
-        # Add validation
-        messages = self._create_query_topic(question, page_names)
-        response = self.llm_manager.generate_response(messages)
-        return response.strip().split(", ")
+        results_failed = True
+        max_attempts = max_attempts
 
-    def _create_query_topic(self, question: str, page_names: List[str]) -> str:
+        # Check format is legit and titles exist
+        while results_failed and max_attempts > 0:
+            topics = []
+            messages = self._create_query_topic(question, page_names, top_k)
+            response = self.llm_manager.generate_response(messages)
+
+            try:
+                topics = response.strip().split(", ")
+                if self._validate_topics(topics, page_names, top_k):
+                    results_failed = False
+            except Exception as e:
+                self.logger.error(f"Error occurred while getting topics: {e}")
+                results_failed = True
+
+            max_attempts -= 1
+
+        return {
+            "topics": topics,
+            "results_failed": results_failed,
+        }
+
+    def _create_query_topic(
+        self, question: str, page_names: List[str], top_k: int = 5
+    ) -> str:
         """
         Create a query topic from the given page names.
 
         Args:
             page_names (List[str]): List of page names to include in the topic
             question (str): The user's question
+            top_k (int): Number of topics to retrieve (default is 5)
 
         Returns:
             str: Formatted query topic string
         """
-        system_prompt = f"""You are an expert in data science and cutting-edge AI technologies. Your task is to give users the five most relevant topics from the available page names to answer the question.
+        system_prompt = f"""You are an expert in data science and cutting-edge AI technologies. Your task is to give users the {top_k} most relevant topics from the available page names to answer the question.
 
         Available page names: {", ".join(page_names)}
 
@@ -792,6 +829,31 @@ class LogseqRAG:
         user_prompt = f"""Question: {question}"""
 
         return [SystemMessage(content=system_prompt), HumanMessage(content=user_prompt)]
+
+    def _validate_topics(
+        self, topics: List[str], page_names: List[str], top_k: int = 5
+    ) -> bool:
+        """
+        Validate that the topics are in the correct format and exist in the page names.
+
+        Args:
+            topics (List[str]): List of topics to validate
+            page_names (List[str]): List of available page names
+            top_k (int): Number of topics to retrieve (default is 5)
+
+        Returns:
+            bool: True if all topics are valid, False otherwise
+        """
+        if not topics or len(topics) != top_k:
+            return False
+
+        for topic in topics:
+            if not isinstance(topic, str) or topic.strip() == "":
+                return False
+            if topic not in page_names:
+                return False
+
+        return True
 
     def _create_messages(self, question: str, context: str) -> List[BaseMessage]:
         """
