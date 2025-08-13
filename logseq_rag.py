@@ -768,7 +768,7 @@ class LogseqRAG:
         max_attempts: int = 3,
     ) -> Dict[str, Any]:
         """
-        Get the five most relevant topics from the LLM based on the question and available page names.
+        Get the some most relevant topics from the LLM based on the question and available page names.
 
         Args:
             question (str): The user's question
@@ -821,7 +821,7 @@ class LogseqRAG:
 
         Available page names: {", ".join(page_names)}
 
-        Only include the page names in your response, without any additional text.
+        Only include the page names in your response, without any additional text. The page names should be comma-separated.
         """
 
         user_prompt = f"""Question: {question}"""

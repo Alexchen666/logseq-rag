@@ -163,6 +163,22 @@ def main():
             help="More pages provide more context but may include less relevant information",
         )
 
+        title_top_k = st.slider(
+            "LLM Topic Search Results",
+            min_value=1,
+            max_value=10,
+            value=5,
+            help="More topics provide more context but may include less relevant information",
+        )
+
+        max_attempts = st.slider(
+            "Max Retrieval Attempts",
+            min_value=1,
+            max_value=5,
+            value=3,
+            help="Number of attempts to retrieve relevant information if initial attempts fail",
+        )
+
         st.divider()
 
         # Vector Store Configuration
@@ -172,7 +188,7 @@ def main():
         logseq_path = st.text_input(
             "Logseq Directory Path",
             placeholder="/path/to/your/logseq/directory",
-            help="Path to your Logseq directory containing pages/ and journals/ folders",
+            help="Path to your Logseq directory containing pages/ folders",
         )
 
         st.divider()
@@ -239,10 +255,6 @@ def main():
                     f"✅ Vector store: {len(st.session_state.vector_store.pages):,} pages loaded"
                 )
 
-            if st.session_state.vector_store.use_chroma:
-                st.caption("Using ChromaDB backend")
-            else:
-                st.caption("Using NumPy backend")
         else:
             st.warning("❌ Vector store not loaded")
 
@@ -297,8 +309,9 @@ def main():
                 try:
                     result = st.session_state.rag_system.query(
                         query,
-                        query,
                         top_k=vector_top_k,
+                        title_top_k=title_top_k,
+                        max_attempts=max_attempts,
                         url=logseq_config.get("url"),
                         token=logseq_config.get("token"),
                     )
