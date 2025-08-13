@@ -363,33 +363,12 @@ def main():
                 ):
                     st.markdown(result["answer"])
 
-                    # Show enhanced retrieval context if available
-                    if result.get("search_context"):
-                        with st.expander("🔍 Search Context Details"):
-                            context = result["search_context"]
-                            st.markdown(
-                                f"**Strategy:** {context.get('strategy', 'N/A')}"
-                            )
-                            st.markdown(
-                                f"**Total Phases:** {context.get('total_phases', 0)}"
-                            )
-                            st.markdown(
-                                f"**Pages Discovered:** {context.get('pages_discovered', 0)}"
-                            )
-
-                            if context.get("search_history"):
-                                st.markdown("**Search History:**")
-                                for step in context["search_history"]:
-                                    st.markdown(
-                                        f"- {step['phase']}: {step['results_count']} results"
-                                    )
-
                     # Show sources
                     if result["sources"]:
                         st.markdown("**📚 Sources:**")
                         for j, source in enumerate(result["sources"][:10]):
                             with st.expander(
-                                f"Source {j + 1}: {source['page_title']} | Source Type - {source['source_type']} | (similarity: {source['similarity']:.3f})"
+                                f"Source {j + 1}: {source['page_title']} | Source Type - {source['source_type']} | Similarity: {source['similarity']:.3f}"
                             ):
                                 st.markdown(f"**Content:** {source['content']}")
                                 if source.get("references"):
