@@ -38,7 +38,6 @@ class LLMConfig:
     provider: LLMProvider
     api_key: Optional[str] = None
     model_name: Optional[str] = None
-    base_url: Optional[str] = None  # For Ollama or custom endpoints
     temperature: float = 0.0
     max_tokens: int = 1000
 
