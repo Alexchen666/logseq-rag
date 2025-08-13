@@ -410,15 +410,14 @@ class LogseqRAG:
         journal_results = []
         page_results = []
         if url and token:
-            # Get title-based results
-            title_results = self.vector_store.search_titles(
-                title_query, top_k=title_top_k
+            # LLM-based title results
+            title_results = self.get_llm_topic(
+                question, [page.page_title for page in self.vector_store.pages]
             )
             # Search Resources using the top title result
             if title_results:
                 for title, score in title_results:
-                    top_title = title.page_title
-                    api_results = self.search_resources(f"[[{top_title}]]", url, token)
+                    api_results = self.search_resources(f"[[{title}]]", url, token)
                     journal_result = api_results.get("Journal", [])
                     pages_queriable = api_results.get("Page", [])
                     page_results.extend(
@@ -755,6 +754,44 @@ class LogseqRAG:
             context_parts.append(context_part)
 
         return "\n\n---\n\n".join(context_parts)
+
+    def get_llm_topic(self, question: str, page_names: List[str]) -> List[str]:
+        """
+        Get the five most relevant topics from the LLM based on the question and available page names.
+
+        Args:
+            question (str): The user's question
+            page_names (List[str]): List of available page names
+
+        Returns:
+            List[str]: The topics chosen by the LLM
+        """
+        # Add validation
+        messages = self._create_query_topic(question, page_names)
+        response = self.llm_manager.generate_response(messages)
+        return response.strip().split(", ")
+
+    def _create_query_topic(self, question: str, page_names: List[str]) -> str:
+        """
+        Create a query topic from the given page names.
+
+        Args:
+            page_names (List[str]): List of page names to include in the topic
+            question (str): The user's question
+
+        Returns:
+            str: Formatted query topic string
+        """
+        system_prompt = f"""You are an expert in data science and cutting-edge AI technologies. Your task is to give users the five most relevant topics from the available page names to answer the question.
+
+        Available page names: {", ".join(page_names)}
+
+        Only include the page names in your response, without any additional text.
+        """
+
+        user_prompt = f"""Question: {question}"""
+
+        return [SystemMessage(content=system_prompt), HumanMessage(content=user_prompt)]
 
     def _create_messages(self, question: str, context: str) -> List[BaseMessage]:
         """
