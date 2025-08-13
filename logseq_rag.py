@@ -408,8 +408,9 @@ class LogseqRAG:
         content_results = self.vector_store.search(question, top_k=top_k)
 
         # Get resources from Logseq API if URL and token are provided
-        journal_results = []
         page_results = []
+        journal_results = []
+
         if url and token:
             # LLM-based title results
             title_results = self.get_llm_topic(
@@ -450,6 +451,8 @@ class LogseqRAG:
                             for jr in journal_result
                         ]
                     )
+            else:
+                logging.warning("LLM-based topic search failed.")
 
         # Combine and deduplicate results
         all_results = {}
