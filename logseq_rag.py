@@ -382,7 +382,6 @@ class LogseqRAG:
     def query(
         self,
         question: str,
-        title_query: str,
         top_k: int = 3,
         title_top_k: int = 5,
         max_attempts: int = 3,
@@ -394,7 +393,6 @@ class LogseqRAG:
 
         Args:
             question (str): The main question to answer
-            title_query (str): Query to find relevant pages by title
             top_k (int): Number of content-based results to retrieve
             title_top_k (int): Number of title-based results to retrieve
             max_attempts (int): Maximum number of attempts for LLM get topic calls
@@ -488,7 +486,6 @@ class LogseqRAG:
             return {
                 "answer": "No relevant information found in your knowledge base.",
                 "sources": [],
-                "title_query": title_query,
                 "provider_info": self.llm_manager.get_provider_info(),
             }
 
@@ -526,7 +523,6 @@ class LogseqRAG:
         return {
             "answer": response,
             "sources": sources,
-            "title_query": title_query,
             "provider_info": self.llm_manager.get_provider_info(),
         }
 
