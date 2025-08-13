@@ -478,7 +478,9 @@ class LogseqRAG:
                 all_results[page_id] = (page, score, "content")
 
         # Sort by combined score
-        combined_results = [(page, score) for page, score, _ in all_results.values()]
+        combined_results = [
+            (page, score) for page, score, _ in all_results.values() if score > 0
+        ]
         combined_results.sort(key=lambda x: x[1], reverse=True)
 
         if not combined_results:
