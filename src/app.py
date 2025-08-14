@@ -90,7 +90,7 @@ def main():
         )
 
         # API Keys Section
-        st.subheader("🔑 Model API Keys")
+        st.subheader("🔑 Model API Key")
         api_keys = {}
 
         if provider == LLMProvider.OPENAI.value:
@@ -135,7 +135,7 @@ def main():
             help="Maximum number of tokens in the response",
         )
 
-        st.subheader("🔑 Logseq API Keys")
+        st.subheader("🔑 Logseq API Key")
         logseq_config = {}
 
         logseq_config["url"] = st.text_input(
@@ -411,10 +411,12 @@ def main():
         This enhanced system allows you to ask questions about your personal knowledge base using various LLM providers.
         
         ### 🤖 Supported LLM Providers
+
         - OpenAI: GPT-3.5, GPT-4, and other OpenAI models
         - Anthropic: Claude-3 Sonnet, Opus, and Haiku
 
         ### ✨ Enhanced Features
+
         - Page-based embeddings: Use complete pages instead of fine-grained blocks for better context
         - Multi-LLM support: Switch between different providers
         - Hybrid search modes: Combine content and title search for better results
@@ -422,12 +424,14 @@ def main():
         - ChromaDB support: Advanced vector database backen
         
         ### 🎯 Getting Started
+
         1. Choose your LLM provider in the sidebar
-        2. Configure API keys and model settings
-        3. Set your Logseq path and vector store options
-        4. Configure database retrieval settings
+        2. Configure API key and model settings
+        3. Configure your Logseq API key and database retrieval options
+        4. Set your Logseq database location
         5. Initialize the system to build embeddings
-        6. Start asking questions with advanced search filters
+        6. Start asking questions!
+        7. (Optional) Preview the vector database search results using `🔍 Vector Search Preview` button.
         """)
 
 
