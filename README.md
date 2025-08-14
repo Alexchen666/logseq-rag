@@ -18,7 +18,7 @@ This enhanced system allows you to ask questions about your personal knowledge b
 - ChromaDB support: Advanced vector database backend
 
 
-### Use Cases
+## Use Cases
 
 You can use the Logseq RAG system:
 
@@ -31,14 +31,14 @@ But,
 - Not to explain the concepts in depth (Use it to find related notes then read them by yourself or ask another LLM for summary)
 - Not to find exact content (Use `query` function in Logseq instead)
 
-### Quick Setup Guide
+## Quick Setup Guide
 1. Clone the repository and install dependencies
 2. Configure your Logseq API settings
 3. Set up your preferred LLM provider
 4. Initialize the RAG system
 5. Start exploring your knowledge base
 
-### Getting Started
+## Getting Started
 1. Choose your LLM provider in the sidebar
 2. Configure API keys and model settings
 3. Set your Logseq path and vector store options
@@ -46,7 +46,7 @@ But,
 5. Initialize the system to build embeddings
 6. Start asking questions with advanced search filters
 
-### Screenshots
+## Screenshots
 
 Home Page
 
@@ -60,7 +60,7 @@ Result
 
 ![Result](pic/Result.png)
 
-### Sample Logseq Pages
+## Sample Logseq Pages
 
 Regular Page
 
@@ -69,3 +69,7 @@ Regular Page
 Journal Page
 
 ![Journal Page](pic/JournalPage.png)
+
+## System Architecture
+
+![System Architecture](pic/architecture.png)

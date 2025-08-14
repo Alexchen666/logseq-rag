@@ -1,0 +1,78 @@
+q: Query
+q.shape: parallelogram
+
+logseq: Logseq
+logseq.shape: cloud
+api: Logseq API
+api.shape: hexagon
+
+logseq <-> api: {
+  style: {
+    stroke-dash: 3
+  }
+}
+
+rag: RAG System
+rag.q: Vectorised Query
+rag.q.shape: package
+rag.db: Vector Database
+rag.db.shape: cylinder
+
+rpage: Regular Pages
+rpage.shape: page
+rpage.style.multiple: true
+
+ragresult: RAG Results
+ragresult.shape: page
+ragresult.style.multiple: true
+
+llm_selection: LLM Topic Selection System
+
+llm_selection.llm_topic: LLM
+llm_selection.llm_topic.shape: c4-person
+
+llm_selection.page_titles: Page Titles
+llm_selection.page_titles.shape: document
+llm_selection.page_titles.style.multiple: true
+
+apiresult: API Results
+apiresult.shape: page
+apiresult.style.multiple: true
+
+journal: Journal Blocks
+journal.shape: page
+journal.style.multiple: true
+
+llmcontext: LLM Context
+llmcontext.shape: page
+llmcontext.style.multiple: true
+
+llm_summary: LLM
+llm_summary.shape: c4-person
+
+summary: Summary
+
+q -> rag.q: Vectorise
+
+logseq -> rpage: Extract
+rpage -> rag.db: Vectorise
+rag.q <-> rag.db: Compare similarity
+rag.db -> ragresult: Select top k most similar pages
+
+q -> llm_selection.llm_topic
+rag.db -> llm_selection.llm_topic: Get regular pages' titles
+llm_selection.llm_topic -> llm_selection.page_titles: Select max k' most relevant regular page titles
+
+llm_selection.page_titles -> api: Query
+
+api -> apiresult: Return regular page content
+api -> journal: Return journal blocks referenced by the page titles
+
+ragresult -> llmcontext: Merge
+apiresult -> llmcontext: Merge
+journal -> llmcontext: Merge
+
+q -> llm_summary
+llmcontext -> llm_summary
+
+llm_summary -> summary
