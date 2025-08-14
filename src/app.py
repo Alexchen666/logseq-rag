@@ -3,7 +3,7 @@ from typing import List
 
 import streamlit as st
 
-from logseq_rag import (
+from src.logseq_rag import (
     LLMConfig,
     LLMProvider,
     LogseqPage,
