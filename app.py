@@ -410,11 +410,11 @@ def main():
         
         This enhanced system allows you to ask questions about your personal knowledge base using various LLM providers.
         
-        ### 🤖 Supported LLM Providers:
+        ### 🤖 Supported LLM Providers
         - OpenAI: GPT-3.5, GPT-4, and other OpenAI models
         - Anthropic: Claude-3 Sonnet, Opus, and Haiku
         
-        ### 🎯 Getting Started:
+        ### 🎯 Getting Started
         1. Choose your LLM provider in the sidebar
         2. Configure API keys and model settings
         3. Set your Logseq path and vector store options
@@ -422,7 +422,7 @@ def main():
         5. Initialize the system to build embeddings
         6. Start asking questions with advanced search filters
 
-        ### ✨ Enhanced Features:
+        ### ✨ Enhanced Features
         - Page-based embeddings: Use complete pages instead of fine-grained blocks for better context
         - Multi-LLM support: Switch between different providers
         - Hybrid search modes: Combine content and title search for better results
