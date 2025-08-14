@@ -45,3 +45,13 @@ Query
 Result
 
 ![Result](pic/Result.png)
+
+### Sample Logseq Pages
+
+Regular Page
+
+![Regular Page](pic/RegularPage.png)
+
+Journal Page
+
+![Journal Page](pic/JournalPage.png)
