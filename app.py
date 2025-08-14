@@ -411,39 +411,25 @@ def main():
         This enhanced system allows you to ask questions about your personal knowledge base using various LLM providers.
         
         ### 🤖 Supported LLM Providers:
-        - **OpenAI**: GPT-3.5, GPT-4, and other OpenAI models
-        - **Anthropic**: Claude-3 Sonnet, Opus, and Haiku
+        - OpenAI: GPT-3.5, GPT-4, and other OpenAI models
+        - Anthropic: Claude-3 Sonnet, Opus, and Haiku
         
         ### 🎯 Getting Started:
-        1. **Choose your LLM provider** in the sidebar
-        2. **Configure API keys** and model settings
-        3. **Set your Logseq path** and vector store options
-        4. **Initialize the system** to build embeddings
-        5. **Start asking questions** with advanced search filters
-        
+        1. Choose your LLM provider in the sidebar
+        2. Configure API keys and model settings
+        3. Set your Logseq path and vector store options
+        4. Configure database retrieval settings
+        5. Initialize the system to build embeddings
+        6. Start asking questions with advanced search filters
+
         ### ✨ Enhanced Features:
-        - **Page-based embeddings**: Now uses complete pages instead of fine-grained blocks for better context
-        - **Multi-LLM support**: Switch between different providers
-        - **Hybrid search modes**: Combine content and title search for better results
-        - **Search preview**: See what pages are retrieved before generating answers
-        - **ChromaDB support**: Optional advanced vector database backend
-        - **Provider comparison**: Try the same question with different models
+        - Page-based embeddings: Use complete pages instead of fine-grained blocks for better context
+        - Multi-LLM support: Switch between different providers
+        - Hybrid search modes: Combine content and title search for better results
+        - Search preview: See what pages are retrieved before generating answers
+        - ChromaDB support: Advanced vector database backend
         
         """)
-
-        # Quick setup guide
-        with st.expander("📋 Quick Setup Guide"):
-            st.markdown("""
-            ### For OpenAI:
-            1. Get API key from [OpenAI Platform](https://platform.openai.com/api-keys)
-            2. Select "openai" provider
-            3. Choose model
-            
-            ### For Anthropic:
-            1. Get API key from [Anthropic Console](https://console.anthropic.com/)
-            2. Select "anthropic" provider  
-            3. Choose model
-            """)
 
 
 if __name__ == "__main__":
