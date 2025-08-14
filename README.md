@@ -17,6 +17,20 @@ This enhanced system allows you to ask questions about your personal knowledge b
 - Search preview: See what pages are retrieved before generating answers
 - ChromaDB support: Advanced vector database backend
 
+
+### Use Cases
+
+You can use the Logseq RAG system:
+
+- To find information across your entire knowledge base
+- To explore your notes in a more interactive way
+- To compare different concepts and ideas
+
+But,
+
+- Not to explain the concepts in depth (Use it to find related notes then read them by yourself or ask another LLM for summary)
+- Not to find exact content (Use `query` function in Logseq instead)
+
 ### Quick Setup Guide
 1. Clone the repository and install dependencies
 2. Configure your Logseq API settings
