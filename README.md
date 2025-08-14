@@ -32,7 +32,7 @@ But,
 - Not to find exact content (Use `query` function in Logseq instead)
 
 ## Quick Setup Guide
-1. Clone the repository and install dependencies
+1. Clone the repository and install dependencies using `uv`
 2. Configure your Logseq API settings
 3. Set up your preferred LLM provider
 4. Initialize the RAG system
@@ -60,6 +60,10 @@ Result
 
 ![Result](pic/Result.png)
 
+## System Architecture
+
+![System Architecture](pic/architecture.png)
+
 ## Sample Logseq Pages
 
 Regular Page
@@ -69,7 +73,3 @@ Regular Page
 Journal Page
 
 ![Journal Page](pic/JournalPage.png)
-
-## System Architecture
-
-![System Architecture](pic/architecture.png)
