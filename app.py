@@ -413,6 +413,13 @@ def main():
         ### 🤖 Supported LLM Providers
         - OpenAI: GPT-3.5, GPT-4, and other OpenAI models
         - Anthropic: Claude-3 Sonnet, Opus, and Haiku
+
+        ### ✨ Enhanced Features
+        - Page-based embeddings: Use complete pages instead of fine-grained blocks for better context
+        - Multi-LLM support: Switch between different providers
+        - Hybrid search modes: Combine content and title search for better results
+        - Search preview: See what pages are retrieved before generating answers
+        - ChromaDB support: Advanced vector database backen
         
         ### 🎯 Getting Started
         1. Choose your LLM provider in the sidebar
@@ -422,12 +429,7 @@ def main():
         5. Initialize the system to build embeddings
         6. Start asking questions with advanced search filters
 
-        ### ✨ Enhanced Features
-        - Page-based embeddings: Use complete pages instead of fine-grained blocks for better context
-        - Multi-LLM support: Switch between different providers
-        - Hybrid search modes: Combine content and title search for better results
-        - Search preview: See what pages are retrieved before generating answers
-        - ChromaDB support: Advanced vector database backend
+d
         
         """)
 
