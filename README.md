@@ -78,6 +78,9 @@ But,
 
 ## Getting Started
 
+> [!IMPORTANT]
+> Before using this system, ensure that Logseq is running and the API function is enabled.
+
 1. Choose your LLM provider in the sidebar
 2. Configure API key and model settings
 3. Configure your Logseq API key and database retrieval options
