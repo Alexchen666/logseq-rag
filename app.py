@@ -428,9 +428,6 @@ def main():
         4. Configure database retrieval settings
         5. Initialize the system to build embeddings
         6. Start asking questions with advanced search filters
-
-d
-        
         """)
 
 
