@@ -163,8 +163,8 @@ def main():
             help="More pages provide more context but may include less relevant information",
         )
 
-        title_top_k = st.slider(
-            "LLM Topic Search Results",
+        title_max_k = st.slider(
+            "LLM Maximum Number of Title Retrievals",
             min_value=1,
             max_value=10,
             value=5,
@@ -310,7 +310,7 @@ def main():
                     result = st.session_state.rag_system.query(
                         query,
                         top_k=vector_top_k,
-                        title_top_k=title_top_k,
+                        title_max_k=title_max_k,
                         max_attempts=max_attempts,
                         url=logseq_config.get("url"),
                         token=logseq_config.get("token"),
@@ -333,7 +333,7 @@ def main():
                 st.success(f"Found {len(results)} relevant pages:")
                 for i, (item, score) in enumerate(results):
                     with st.expander(
-                        f"Page {i + 1}: '{item.page_title}' (similarity: {score:.3f})"
+                        f"Page {i + 1}: '{item.page_title}' (Relevance: {score:.3f})"
                     ):
                         st.markdown(f"**Page:** {item.page_title}")
                         st.markdown(
@@ -368,7 +368,7 @@ def main():
                         st.markdown("**📚 Sources:**")
                         for j, source in enumerate(result["sources"][:10]):
                             with st.expander(
-                                f"Source {j + 1}: {source['page_title']} | Source Type - {source['source_type']} | Similarity: {source['similarity']:.3f}"
+                                f"Source {j + 1}: {source['page_title']} | Source Type - {source['source_type']} | Relevance: {source['relevance']:.3f}"
                             ):
                                 st.markdown(f"**Content:** {source['content']}")
                                 if source.get("references"):
