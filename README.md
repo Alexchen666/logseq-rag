@@ -32,6 +32,16 @@ This enhanced system allows you to ask questions about your personal knowledge b
 5. Initialize the system to build embeddings
 6. Start asking questions with advanced search filters
 
+### Screenshots
 
+Home Page
 
+![Home Page](pic/Homepage.png)
 
+Query
+
+![Query](pic/Query.png)
+
+Result
+
+![Result](pic/Result.png)
