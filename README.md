@@ -7,10 +7,12 @@ RAG System for Logseq Knowledge Base.
 This enhanced system allows you to ask questions about your personal knowledge base using various LLM providers.
 
 ### Supported LLM Providers
+
 - OpenAI: GPT-3.5, GPT-4, and other OpenAI models
 - Anthropic: Claude-3 Sonnet, Opus, and Haiku
 
 ### Enhanced Features
+
 - Page-based embeddings: Use complete pages instead of fine-grained blocks for better context
 - Multi-LLM support: Switch between different providers
 - Hybrid search modes: Combine content and title search for better results
@@ -31,20 +33,62 @@ But,
 - Not to explain the concepts in depth (Use it to find related notes then read them by yourself or ask another LLM for summary)
 - Not to find exact content (Use `query` function in Logseq instead)
 
-## Quick Setup Guide
-1. Clone the repository and install dependencies using `uv`
-2. Configure your Logseq API settings
-3. Set up your preferred LLM provider
-4. Initialize the RAG system
-5. Start exploring your knowledge base
+## Quick Setup Guide - With Docker
+
+> [!IMPORTANT]  
+> Prerequisites:
+> * Having `docker`, `docker-buildx` installed.
+> * Having `Docker Desktop` or `Orbstack` (recommended) installed.
+
+1. Clone the repository
+2. Build the Docker image
+   ```bash
+   docker build -t logseq-rag:latest .
+   ```
+3. Run the Docker container
+   ```bash
+   docker run --rm -p 8501:8501 --mount type=bind,src=/YOUR/LOGSEQ/DIRECTORY,dst=/app/logseq --network host logseq-rag:latest
+   ```
+
+> [!Note]
+> Replace `/YOUR/LOGSEQ/DIRECTORY` with the path to your Logseq directory.
+>
+> If you set `dst` as `/app/logseq`, the Logseq directory path will be `/app/logseq`.
+
+
+## Quick Setup Guide - Without Docker
+
+> [!IMPORTANT]
+> Prerequisites:
+> * Having `uv` installed.
+
+1. Clone the repository into your project directory
+2. Create a virtual environment in your project directory
+   ```bash
+   uv init
+   ```
+3. Install the required dependencies
+   ```bash
+   uv sync --frozen
+   ```
+4. Run the script
+   ```bash
+   uv run streamlit run src/app.py
+   ```
 
 ## Getting Started
+
 1. Choose your LLM provider in the sidebar
-2. Configure API keys and model settings
-3. Set your Logseq path and vector store options
-4. Configure database retrieval settings
+2. Configure API key and model settings
+3. Configure your Logseq API key and database retrieval options
+4. Set your Logseq database location
 5. Initialize the system to build embeddings
-6. Start asking questions with advanced search filters
+6. Start asking questions!
+7. (Optional) Preview the vector database search results using `🔍 Vector Search Preview` button.
+
+
+> [!Note]
+> It takes longer to run for the first time because it needs to download a sentence transformer.
 
 ## Screenshots
 
