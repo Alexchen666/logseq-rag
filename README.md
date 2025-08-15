@@ -81,6 +81,10 @@ But,
 > [!IMPORTANT]
 > Before using this system, ensure that Logseq is running and the API function is enabled.
 
+
+> [!TIP]
+> Check [Logseq Local Http Server](https://docs.logseq.com/#/page/local%20http%20server) to set up the local server and get an API key.
+
 1. Choose your LLM provider in the sidebar
 2. Configure API key and model settings
 3. Configure your Logseq API key and database retrieval options
